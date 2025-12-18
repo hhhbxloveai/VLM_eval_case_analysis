@@ -1,0 +1,6 @@
+LMUData/
+taichu_vl_moe_lora_251210_s2400/
+test_python_file/
+tmp_data/
+*.pyc
+__pycache__/
