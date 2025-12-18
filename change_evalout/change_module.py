@@ -30,11 +30,11 @@ def create_file_config(model_prefix="taichu_vl_moe"):
             "module": tool2_change_evalout_image_AI2D, 
             "folder": None  # 使用None表示不需要folder
         },
-        f"{model_prefix}_ChartQA_TEST.xlsx": {
+        f"{model_prefix}_ChartQA_TEST_result.xlsx": {
             "module": tool2_change_evalout_image_ChartQA, 
             "folder": "ChartQA"
         },
-        f"{model_prefix}_DocVQA_VAL.xlsx": {
+        f"{model_prefix}_DocVQA_VAL_result.xlsx": {
             "module": tool2_change_evalout_image_DocVQA, 
             "folder": "DocVQA"
         },
@@ -62,7 +62,7 @@ def create_file_config(model_prefix="taichu_vl_moe"):
             "module": tool2_change_evalout_image_MMStar, 
             "folder": "MMStar"
         },
-        f"{model_prefix}_OCRBench.xlsx": {
+        f"{model_prefix}_OCRBench_result.xlsx": {
             "module": tool2_change_evalout_image_OCRBench, 
             "folder": "OCRBench"
         },

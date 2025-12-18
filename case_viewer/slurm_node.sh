@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH -p ai_training
-#SBATCH -w dx-ai-node7
+#SBATCH -w dx-ai-node5
 #SBATCH --cpus-per-task=1
 #SBATCH --job-name=case_viewer
 #SBATCH -o /dev/null
@@ -14,6 +14,6 @@ output_folder="/mnt/lustre/houbingxi/1212_moe_eval_badcase/case_viewer/logs"
 log_file="${output_folder}/${timestamp}_evaluate.log"
 exec &> $log_file
 
-cd /mnt/lustre/houbingxi/1212_moe_eval_badcase/case_viewer
+cd /mnt/lustre/houbingxi/VLM_eval_case_analysis/case_viewer
 streamlit run  main.py --server.port 8501 
 
