@@ -213,7 +213,7 @@ def run(server_file_path):
         # 动态判断颜色
         is_correct = row['hit']
         header_color = "#198754" if is_correct else "#dc3545" # Green / Red
-        hit_icon = "✅" if is_correct else "❌"
+        hit_icon = "✅(Hit:1)" if is_correct else "❌(Hit:0)"
 
         with st.container(border=True):
             col_img, col_text = st.columns([1, 2])

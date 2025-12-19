@@ -8,7 +8,7 @@ import streamlit.components.v1 as components
 #      配置区域
 # ===========================
 # OCRBench 需要的列
-REQUIRED_COLS = ["index", "question", "answer", "prediction", "image_path"]
+REQUIRED_COLS = ["index", "question", "answer", "prediction", "image_path", "hit"]
 
 # 1. 加载数据函数
 @st.cache_data
@@ -29,10 +29,8 @@ def load_data(file_path):
         if 'index' in df.columns:
             df['index'] = df['index'].astype(str).str.strip()
         
-        # 3. 自动计算 hit (如果Excel里没有hit列)
-        if 'hit' not in df.columns:
-            # 大小写不敏感对比
-            df['hit'] = df['answer'].str.lower() == df['prediction'].str.lower()
+        # 3. 处理hit列，确保是整数类型(0或1)
+        df['hit'] = df['hit'].astype(int)
         
         return df, None
     except Exception as e:
@@ -212,9 +210,9 @@ def run(server_file_path):
 
     for idx, row in current_batch.iterrows():
         # 动态判断颜色
-        is_correct = row['hit']
+        is_correct = bool(row['hit'])  # 将整数转换为布尔值用于判断
         header_color = "#198754" if is_correct else "#dc3545" # Green / Red
-        hit_icon = "✅" if is_correct else "❌"
+        hit_icon = "✅(Hit:1)" if is_correct else "❌(Hit:0)"
 
         with st.container(border=True):
             col_img, col_text = st.columns([1, 2])

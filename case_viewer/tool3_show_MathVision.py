@@ -8,31 +8,26 @@ import streamlit.components.v1 as components
 #      配置区域
 # ===========================
 # MathVision 需要的列
-REQUIRED_COLS = ["index", "question", "answer", "prediction", "res", "image_path"]
+REQUIRED_COLS = ["index", "question", "answer", "prediction", "res", "image_path", "hit"]
 
-# 1. 加载数据函数 (含自动计算逻辑)
+# 1. 加载数据函数
 @st.cache_data
 def load_data(file_path):
     try:
         df = pd.read_excel(file_path)
         
-        # 2.1 检查必需字段
+        # 检查必需字段
         missing = [c for c in REQUIRED_COLS if c not in df.columns]
         if missing:
             return None, f"Excel文件中缺少列: {missing}"
         
-        # 2.2 确保 index 是字符串 (用于搜索)
+        # 确保 index 是字符串 (用于搜索)
         if 'index' in df.columns:
             df['index'] = df['index'].astype(str).str.strip()
 
-        # 2.3 自动计算 Hit 逻辑
-        # 逻辑：将 answer 和 res 都转为字符串，去除首尾空格，判断是否相等
-        def check_hit(row):
-            ans = str(row['answer']).strip() if pd.notna(row['answer']) else ""
-            res = str(row['res']).strip() if pd.notna(row['res']) else ""
-            return ans == res
-
-        df['hit'] = df.apply(check_hit, axis=1)
+        # 确保 hit 列是布尔类型
+        if 'hit' in df.columns:
+            df['hit'] = df['hit'].astype(bool)
         
         return df, None
     except Exception as e:
@@ -72,14 +67,14 @@ def run(server_file_path):
     # --- 侧边栏 ---
     st.sidebar.divider()
     
-    # 计算完 hit 后，它是布尔值
+    # hit 列已经是布尔值
     hit_options = [True, False]
     
     filter_hit = st.sidebar.multiselect(
-        "Hit 状态过滤 (自动计算)",
+        "Hit 状态过滤",
         options=hit_options,
         default=hit_options,
-        format_func=lambda x: "✅ 正确 (True)" if x else "❌ 错误 (False)",
+        format_func=lambda x: "1" if x else "0",
         key=f"{prefix}_filter_hit"
     )
 
@@ -165,7 +160,6 @@ def run(server_file_path):
 
         current_input_key = key_top if location_suffix == "top" else key_bottom
         
-        # 修复1:  使用与第一份代码相同的动态列布局
         if location_suffix == "top": 
             c1, c2, c3, c4 = st. columns([1, 2, 1, 1])
         else:
@@ -180,7 +174,6 @@ def run(server_file_path):
         with c4:
             st.button("下一页 ▶", disabled=(current_page >= total_pages - 1), use_container_width=True, on_click=next_page_callback, key=f"{prefix}_btn_next_{location_suffix}")
         
-        # 修复2: 只在底部渲染 Top 按钮，并修复点击区域
         if location_suffix == "bottom":
             with c5:
                 st.markdown(
@@ -236,10 +229,10 @@ def run(server_file_path):
                 # 1. 标题 (Index + Hit)
                 is_hit = bool(row['hit'])
                 header_color = "#198754" if is_hit else "#dc3545" # Green / Red
-                hit_text = "Match" if is_hit else "Mismatch"
+                hit_text = "(Hit:1)" if is_hit else "(Hit:0)"
                 hit_icon = "✅" if is_hit else "❌"
                 
-                st.markdown(f"<h3 style='color: {header_color}; margin-top:0;'>Index: {row['index']} ({hit_icon} {hit_text})</h3>", unsafe_allow_html=True)
+                st.markdown(f"<h3 style='color: {header_color}; margin-top:0;'>Index: {row['index']} {hit_icon} {hit_text}</h3>", unsafe_allow_html=True)
                 
                 # 2. 问题
                 st.markdown(f"**Question:**")

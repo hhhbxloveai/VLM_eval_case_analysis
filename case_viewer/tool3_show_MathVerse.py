@@ -7,8 +7,8 @@ import streamlit.components.v1 as components
 # ===========================
 #      配置区域
 # ===========================
-# MathVerse 需要的列 (注意: res 变成了 extract, hit 变成了 score)
-REQUIRED_COLS = ["index", "question", "answer", "prediction", "extract", "image_path", "score"]
+# MathVerse 需要的列
+REQUIRED_COLS = ["index", "question", "answer", "prediction", "extract", "image_path", "hit"]
 
 # 1. 加载数据函数
 @st.cache_data
@@ -64,20 +64,20 @@ def run(server_file_path):
     # --- 侧边栏 ---
     st.sidebar.divider()
     
-    # MathVerse 使用 score (0/1) 而不是 hit (True/False)
+    # MathVerse 使用 hit (0/1)
     # 获取唯一值并排序
-    if 'score' in df.columns:
-        score_options = sorted(df['score'].unique())
+    if 'hit' in df.columns:
+        hit_options = sorted(df['hit'].unique())
         
-        filter_score = st.sidebar.multiselect(
-            "Score 状态过滤 (MathVerse: 0/1)",
-            options=score_options,
-            default=score_options,
-            format_func=lambda x: f"{x} (True)" if x == 1 else f"{x} (False)", # 保持原有的标签优化
-            key=f"{prefix}_filter_score"
+        filter_hit = st.sidebar.multiselect(
+            "Hit 状态过滤 (MathVerse: 0/1)",
+            options=hit_options,
+            default=hit_options,
+            format_func=lambda x: f"{x}" if x == 1 else f"{x}",
+            key=f"{prefix}_filter_hit"
         )
     else:
-        filter_score = None
+        filter_hit = None
 
     # --- 标题与搜索区域 ---
     st.title("📊 MathVerse Viewer")
@@ -96,9 +96,9 @@ def run(server_file_path):
         is_search_mode = True
         if df_display.empty:
             st.warning(f"未找到 Index 为 '{search_str}' 的数据。")
-    # 2. 侧边栏过滤 (使用 filter_score)
-    elif filter_score is not None:
-        df_display = df[df['score'].isin(filter_score)]
+    # 2. 侧边栏过滤 (使用 filter_hit)
+    elif filter_hit is not None:
+        df_display = df[df['hit'].isin(filter_hit)]
     else:
         df_display = df
 
@@ -161,7 +161,6 @@ def run(server_file_path):
 
         current_input_key = key_top if location_suffix == "top" else key_bottom
         
-        # 修复1:  使用与第一份代码相同的动态列布局
         if location_suffix == "top": 
             c1, c2, c3, c4 = st. columns([1, 2, 1, 1])
         else:
@@ -176,7 +175,6 @@ def run(server_file_path):
         with c4:
             st.button("下一页 ▶", disabled=(current_page >= total_pages - 1), use_container_width=True, on_click=next_page_callback, key=f"{prefix}_btn_next_{location_suffix}")
         
-        # 修复2: 只在底部渲染 Top 按钮，并修复点击区域
         if location_suffix == "bottom":
             with c5:
                 st.markdown(
@@ -229,15 +227,14 @@ def run(server_file_path):
 
             # --- 文本列 ---
             with col_text:
-                # 1. 标题 (Index + Score)
-                # 逻辑: 1 为 True (Good/Green), 0 为 False (Bad/Red)
-                score_val = row['score']
-                is_success = (score_val == 1) # 判定逻辑
+                # 1. 标题 (Index + Hit)
+                hit_val = row['hit']
+                is_success = (hit_val == 1)
                 
-                header_color = "#198754" if is_success else "#dc3545" # Green / Red
-                score_icon = "✅" if is_success else "❌"
+                header_color = "#198754" if is_success else "#dc3545"
+                hit_icon = "✅" if is_success else "❌"
                 
-                st.markdown(f"<h3 style='color: {header_color}; margin-top:0;'>Index: {row['index']} ({score_icon} Score: {score_val})</h3>", unsafe_allow_html=True)
+                st.markdown(f"<h3 style='color: {header_color}; margin-top:0;'>Index: {row['index']} ({hit_icon} Hit: {hit_val})</h3>", unsafe_allow_html=True)
                 
                 # 2. 问题
                 st.markdown(f"**Question:**")
@@ -245,14 +242,13 @@ def run(server_file_path):
                 
                 st.divider()
 
-                # 3. 答案对比区域 (使用列布局并排展示)
+                # 3. 答案对比区域
                 c_ans, c_res = st.columns(2)
                 
                 with c_ans:
                     st.info(f"**Standard Answer:**\n\n{row['answer']}")
                 
                 with c_res:
-                    # 如果 Score 为 1，用绿色，否则用红色
                     if is_success:
                         st.success(f"**Model Extract:**\n\n{row['extract']}")
                     else:
